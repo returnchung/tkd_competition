@@ -203,7 +203,8 @@ def count_users():
         else:
             continue
 
-    sampling = random.choices(users, k=10**5)
+    population_size = (len(users) // 100) * 10 ** 5
+    sampling = random.choices(users, k=population_size)
     counts = list()
     score = 0
     winner = None
