@@ -1,8 +1,13 @@
 import os
+import json
+from collections import defaultdict
+from uuid import uuid4
 from app import app
 from app.controller import custom_error
 from flask import (
     jsonify,
+    request,
+    Response,
     render_template,
     make_response,
     abort,
@@ -10,11 +15,60 @@ from flask import (
     url_for,
     send_from_directory,
 )
+from werkzeug.routing import BaseConverter
 
 
+class RegexConverter(BaseConverter):
+    def __init__(self, url_map, *args):
+        super(RegexConverter, self).__init__(url_map)
+        self.regex = args[0]
+
+
+app.url_map.converters["regex"] = RegexConverter
 PATH_STATIC_RESOUCES = f"{os.path.dirname(os.path.abspath(__file__))}/static/"
+PATH_TEMPLATE_RESOUCES = f"{os.path.dirname(os.path.abspath(__file__))}/templates/"
 SBADMIN2 = "sbadmin2"
-os.path.join(PATH_STATIC_RESOUCES, SBADMIN2)
+USER_DATA = "user_data.json"
+
+
+def import_data():
+    user_data = defaultdict(dict)
+    try:
+        with open(USER_DATA, "r") as fp:
+            _data = json.load(fp)
+            user_data.update(_data)
+
+    except Exception:
+        print(f"Failed to import data {USER_DATA}.")
+
+    return user_data
+
+
+def save_data(data):
+    data_to_save = import_data()
+    try:
+        idx = data.pop("ID") if "ID" in data else str(uuid4())
+        data_to_save[idx] = {k.lower(): v for k, v in data.items()}
+        with open(USER_DATA, "w") as fw:
+            json.dump(data_to_save, fw)
+
+    except Exception as e:
+        print(f"Failed to save data {USER_DATA}.")
+
+    return data_to_save
+
+
+def delete_data(uuid):
+    data_to_save = import_data()
+    try:
+        data_to_save.pop(uuid)
+        with open(USER_DATA, "w") as fw:
+            json.dump(data_to_save, fw)
+
+    except KeyError:
+        print(f"Failed to delete {uuid} from data {USER_DATA}.")
+
+    return data_to_save
 
 
 @app.route("/favicon.ico")
@@ -50,7 +104,18 @@ def send_static_vendor(path):
     )
 
 
-@app.route("/")
+# For default templates
+@app.route(r"/<regex(r'[\w-]+\.html'):file>")
+def send_static_html(file):
+    return send_from_directory(os.path.join(PATH_TEMPLATE_RESOUCES, SBADMIN2), file)
+
+
+@app.route("""/regex/<regex("[abcABC0-9]{4,6}"):uid>-<slug>/""")
+def example_regex(uid, slug):
+    return "uid: %s, slug: %s" % (uid, slug)
+
+
+@app.route("/index")
 def index():
     title = "Chapter 0: Start Page"
     body = "Welcome passengers. Ready to set sail."
@@ -65,6 +130,83 @@ def hello():
 @app.route("/home")
 def home():
     return render_template("/sbadmin2/index.html")
+
+
+@app.route("/tables", methods=["GET", "POST", "DELETE"])
+def tables_list():
+    # # mock data
+    # data = [
+    #     {
+    #         "id": "12345",
+    #         "name": "Stanley",
+    #         "position": "TW",
+    #         "office": "Pentium",
+    #         "age": "30",
+    #         "date": "2019-09-08 10:00:00",
+    #         "salary": "100K",
+    #     }
+    # ] * 100
+    # return render_template("/sbadmin2/tables.html", data=data)
+    user_data = import_data()
+    users = list()
+    for idx, v in user_data.items():
+        v.update(id=idx)
+        users.append(v)
+
+    return render_template("/sbadmin2/tables.html", data=users)
+
+
+# FIXME: Until find the way to pass submitted data
+# @app.route("/users", methods=["POST"])
+# def create_user():
+#     body = get_request_body(request)
+#     print(body, type(body))
+#     return handle_general_page(body)
+
+# FIXME: Until find the way to pass submitted data
+# @app.route("/users/<path:user_id>", methods=["PUT"])
+# def update_user(user_id):
+#     body = get_request_body(request)
+#     print("update", user_id)
+#     print(body, type(body))
+#     return handle_general_page({"id": user_id})
+
+
+@app.route("/createuser", methods=["POST"])
+def create_user():
+    body = get_request_body(request)
+    save_data(body)
+    return redirect("/tables")
+
+
+@app.route("/updateuser", methods=["POST"])
+def update_user():
+    body = get_request_body(request)
+    save_data(body)
+    return redirect("/tables")
+
+
+@app.route("/users/<path:user_id>", methods=["DELETE"])
+def delete_user(user_id):
+    deleted_data = delete_data(user_id)
+    return deleted_data or {}
+
+
+def get_request_body(request, is_json=True):
+    if request.content_type == "application/x-www-form-urlencoded":
+        body = request.form.to_dict()
+        return body
+
+    body = request.get_data()
+    if is_json:
+        try:
+            body = json.loads(body)
+        except json.JSONDecodeError as e:
+            body = body.decode("UTF-8")
+    else:
+        body = body.decode("UTF-8")
+
+    return body
 
 
 def handle_general_page(response):
