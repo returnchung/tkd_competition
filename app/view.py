@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import math
 from collections import defaultdict
 from uuid import uuid4
 from app import app
@@ -29,7 +30,7 @@ app.url_map.converters["regex"] = RegexConverter
 PATH_STATIC_RESOUCES = f"{os.path.dirname(os.path.abspath(__file__))}/static/"
 PATH_TEMPLATE_RESOUCES = f"{os.path.dirname(os.path.abspath(__file__))}/templates/"
 SBADMIN2 = "sbadmin2"
-USER_DATA = "user_data.json"
+USER_DATA = "secrets/user_data.json"
 
 
 def import_data():
@@ -51,7 +52,7 @@ def save_data(data):
         idx = data.pop("ID") if "ID" in data else str(uuid4())
         data_to_save[idx] = {k.lower(): v for k, v in data.items()}
         with open(USER_DATA, "w") as fw:
-            json.dump(data_to_save, fw)
+            json.dump(data_to_save, fw, ensure_ascii=False)
 
     except Exception as e:
         print(f"Failed to save data {USER_DATA}.")
@@ -203,7 +204,7 @@ def count_users():
         else:
             continue
 
-    population_size = (len(users) // 100) * 10 ** 5
+    population_size = math.ceil(len(users) / 100) * 10 ** 4
     sampling = random.choices(users, k=population_size)
     counts = list()
     score = 0
