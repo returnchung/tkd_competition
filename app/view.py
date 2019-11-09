@@ -133,7 +133,7 @@ def home():
     return render_template("/sbadmin2/index.html")
 
 
-@app.route("/tables", methods=["GET", "POST", "DELETE"])
+@app.route("/coaches", methods=["GET", "POST", "DELETE"])
 def manage_users():
     # # mock data
     # data = [
@@ -193,7 +193,7 @@ def delete_user(user_id):
     return deleted_data or {}
 
 
-@app.route("/charts", methods=["GET"])
+@app.route("/judger", methods=["GET"])
 def count_users():
     user_data = import_data()
     users = list()

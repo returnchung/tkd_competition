@@ -41,14 +41,14 @@
 
       <!-- Nav Item - Charts -->
       <li class="nav-item">
-        <a class="nav-link" href="/charts">
+        <a class="nav-link" href="/judger">
           <i class="fas fa-fw fa-chart-area"></i>
           <span>Judger</span></a>
       </li>
 
       <!-- Nav Item - Tables -->
       <li class="nav-item active">
-        <a class="nav-link" href="tables">
+        <a class="nav-link" href="/coaches">
           <i class="fas fa-fw fa-table"></i>
           <span>Coach</span></a>
       </li>
@@ -98,7 +98,7 @@
 
           <!-- Page Heading -->
           <h1 class="h3 mb-2 text-gray-800">Coach Management</h1>
-          <p class="mb-4">Manage coaches for Taewondow competition and one of them would be the <a target="_blank" href="/charts"> Judger</a>.</p>
+          <p class="mb-4">Manage coaches for Taewondow competition and one of them would be the <a target="_blank" href="/judger">Judger</a>.</p>
 
           <!-- DataTales Example -->
           <div class="card shadow mb-4">
@@ -318,7 +318,7 @@
             method: 'delete'
           }).then(response => 
             response.json().then(json => {
-              window.location.href = "/tables";
+              window.location.href = "/coaches";
             })
           );
         }        
