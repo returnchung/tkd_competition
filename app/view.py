@@ -1,5 +1,6 @@
 import os
 import json
+import random
 from collections import defaultdict
 from uuid import uuid4
 from app import app
@@ -133,7 +134,7 @@ def home():
 
 
 @app.route("/tables", methods=["GET", "POST", "DELETE"])
-def tables_list():
+def manage_users():
     # # mock data
     # data = [
     #     {
@@ -190,6 +191,32 @@ def update_user():
 def delete_user(user_id):
     deleted_data = delete_data(user_id)
     return deleted_data or {}
+
+
+@app.route("/charts", methods=["GET"])
+def count_users():
+    user_data = import_data()
+    users = list()
+    for idx, v in user_data.items():
+        if "name" in v:
+            users.append(v["name"])
+        else:
+            continue
+
+    sampling = random.choices(users, k=10**5)
+    counts = list()
+    score = 0
+    winner = None
+    for user in users:
+        hits = sampling.count(user)
+        counts.append(hits)
+        if hits > score:
+            winner = user
+            score = hits
+
+    return render_template(
+        "/sbadmin2/charts.html", users=users, counts=counts, winner=winner
+    )
 
 
 def get_request_body(request, is_json=True):
