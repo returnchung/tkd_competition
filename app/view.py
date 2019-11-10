@@ -178,14 +178,14 @@ def manage_users():
 def create_user():
     body = get_request_body(request)
     save_data(body)
-    return redirect("/tables")
+    return redirect("/coaches")
 
 
 @app.route("/updateuser", methods=["POST"])
 def update_user():
     body = get_request_body(request)
     save_data(body)
-    return redirect("/tables")
+    return redirect("/coaches")
 
 
 @app.route("/users/<path:user_id>", methods=["DELETE"])
